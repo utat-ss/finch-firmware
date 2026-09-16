@@ -47,4 +47,16 @@ config FINCH_CSP_ROUTER_PRIORITY
 	help
 	  Zephyr thread priority for the CSP router thread.
 
+config FINCH_CSP_CAN
+	bool "Enable FINCH CSP CAN interface"
+	depends on CAN
+	select EVENTS
+	help
+	  Add a CSP interface over the board's chosen zephyr,canbus device.
+	  Requires the board devicetree to set the zephyr,canbus chosen node.
+
+	  The CSP CAN driver allocates its per-interface context from the
+	  system heap, so CONFIG_HEAP_MEM_POOL_SIZE must be set large enough
+	  to fit it (~1.3KB with default CSP CAN RX queue/thread settings).
+
 endif # FINCH_CSP
