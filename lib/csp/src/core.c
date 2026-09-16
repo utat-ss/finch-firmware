@@ -9,9 +9,16 @@
 
 #include <csp/csp.h>
 #include <csp/interfaces/csp_if_lo.h>
+#ifdef CONFIG_FINCH_CSP_CAN
+#include <csp/drivers/can_zephyr.h>
+#endif
 #include <finch/csp/csp.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#ifdef CONFIG_FINCH_CSP_CAN
+#include <zephyr/devicetree.h>
+#include <zephyr/device.h>
+#endif
 
 LOG_MODULE_REGISTER(finch_csp);
 
@@ -20,6 +27,15 @@ static struct k_thread finch_csp_router_thread_data;
 static k_tid_t finch_csp_router_tid;
 static K_MUTEX_DEFINE(finch_csp_lock);
 static bool finch_csp_initialized;
+
+#ifdef CONFIG_FINCH_CSP_CAN
+
+#define CANBUS_NODE DT_CHOSEN(zephyr_canbus)
+
+static const struct device *const can = DEVICE_DT_GET(CANBUS_NODE);
+static const uint32_t can_bitrate = DT_PROP(CANBUS_NODE, bitrate);
+static csp_iface_t *can_if;
+#endif
 
 static void finch_csp_router_thread(void *arg1, void *arg2, void *arg3)
 {
@@ -83,7 +99,16 @@ int finch_csp_init(void)
 
 	csp_init();
 
-	csp_if_lo.addr = CONFIG_FINCH_CSP_NODE_ADDRESS;
+#ifdef CONFIG_FINCH_CSP_CAN
+	ret = csp_can_open_and_add_interface(can, "CAN", CONFIG_FINCH_CSP_NODE_ADDRESS,
+					     can_bitrate, 0, 0, &can_if);
+	if (ret != CSP_ERR_NONE) {
+		LOG_ERR("Failed to add CSP CAN interface (%d)", ret);
+		ret = -EIO;
+		goto out;
+	}
+	can_if->is_default = 1;
+#endif
 
 	ret = finch_csp_bind_services();
 	if (ret < 0) {
