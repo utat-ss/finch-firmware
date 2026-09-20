@@ -19,7 +19,20 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,console = &uart4;
+		/* Selects raw CAN hardware; it does not attach CAN to libcsp by itself. */
 		zephyr,canbus = &fdcan1;
+		/* Applications dequeue completed camera frames from DCMI. */
+		zephyr,camera = &dcmi;
+	};
+
+	fstab {
+		compatible = "zephyr,fstab";
+
+		sd_card: sd-card {
+			compatible = "zephyr,fstab,fatfs";
+			mount-point = "/SD:";
+			disk-access;
+		};
 	};
 
 	leds: leds {
@@ -103,6 +116,110 @@
 	fdcan1_tx_pa12: fdcan1_tx_pa12 {
 		pinmux = <STM32_PINMUX('A', 12, AF9)>;
 	};
+
+	/* MCO1 drives the OV7670 XCLK input from PA8. */
+	rcc_mco_1_pa8: rcc_mco_1_pa8 {
+		pinmux = <STM32_PINMUX('A', 8, AF0)>;
+		slew-rate = "very-high-speed";
+	};
+
+	i2c1_scl_pb8: i2c1_scl_pb8 {
+		pinmux = <STM32_PINMUX('B', 8, AF4)>;
+		bias-pull-up;
+		drive-open-drain;
+	};
+
+	i2c1_sda_pb9: i2c1_sda_pb9 {
+		pinmux = <STM32_PINMUX('B', 9, AF4)>;
+		bias-pull-up;
+		drive-open-drain;
+	};
+
+	dcmi_pins: dcmi_pins {
+		pinmux = <STM32_PINMUX('A', 6, AF13)>,
+			 <STM32_PINMUX('H', 8, AF13)>,
+			 <STM32_PINMUX('I', 5, AF13)>,
+			 <STM32_PINMUX('H', 9, AF13)>,
+			 <STM32_PINMUX('H', 10, AF13)>,
+			 <STM32_PINMUX('H', 11, AF13)>,
+			 <STM32_PINMUX('H', 12, AF13)>,
+			 <STM32_PINMUX('E', 4, AF13)>,
+			 <STM32_PINMUX('I', 4, AF13)>,
+			 <STM32_PINMUX('E', 5, AF13)>,
+			 <STM32_PINMUX('E', 6, AF13)>;
+	};
+
+	sdmmc1_pins: sdmmc1_pins {
+		pinmux = <STM32_PINMUX('C', 8, AF12)>,
+			 <STM32_PINMUX('C', 9, AF12)>,
+			 <STM32_PINMUX('C', 10, AF12)>,
+			 <STM32_PINMUX('C', 11, AF12)>,
+			 <STM32_PINMUX('C', 12, AF12)>,
+			 <STM32_PINMUX('D', 2, AF12)>;
+		bias-pull-up;
+		slew-rate = "very-high-speed";
+	};
+};
+
+&i2c1 {
+	pinctrl-0 = <&i2c1_scl_pb8 &i2c1_sda_pb9>;
+	pinctrl-names = "default";
+	clock-frequency = <400000>;
+	status = "okay";
+
+	ov7670: ov7670@21 {
+		compatible = "ovti,ov7670";
+		reg = <0x21>;
+		status = "okay";
+
+		port {
+			ov7670_ep_out: endpoint {
+				remote-endpoint-label = "dcmi_ep_in";
+			};
+		};
+	};
+};
+
+/* Output the board's 24 MHz HSE divided by four: 6 MHz for OV7670 XCLK. */
+&mco1 {
+	clocks = <&rcc STM32_SRC_HSE MCO1_SEL(MCO1_SEL_HSE)>;
+	prescaler = <MCO1_PRE(MCO_PRE_DIV_4)>;
+	pinctrl-0 = <&rcc_mco_1_pa8>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&dcmi {
+	pinctrl-0 = <&dcmi_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	port {
+		dcmi_ep_in: endpoint {
+			remote-endpoint-label = "ov7670_ep_out";
+			bus-width = <8>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			pclk-sample = <1>;
+		};
+	};
+};
+
+&dma1 {
+	status = "okay";
+};
+
+&dmamux1 {
+	status = "okay";
+};
+
+&sdmmc1 {
+	pinctrl-0 = <&sdmmc1_pins>;
+	pinctrl-names = "default";
+	bus-width = <4>;
+	cd-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>;
+	disk-name = "SD";
+	status = "okay";
 };
 
 &fdcan1 {
