@@ -9,4 +9,8 @@
 
 int finch_csp_init(void);
 
+#ifdef CONFIG_FINCH_CSP_CAN
+int finch_csp_can_init(void);
+#endif
+
 #endif /* FINCH_CSP_CSP_H_ */
