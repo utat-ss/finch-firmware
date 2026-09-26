@@ -132,7 +132,7 @@ finch/
 ```sh
 $env:FINCH_FIRMWARE_ROOT = (Get-Location).Path
 pip install west
-cd finch_firmware
+cd finch-firmware
 
 west init --local --mf west.yml
 west update
