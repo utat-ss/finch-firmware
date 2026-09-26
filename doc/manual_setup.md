@@ -58,6 +58,7 @@ On this step the Zephyr SDK is installed, so it might take a while.
 
 ```sh
 pip install pyocd
+pyocd pack update
 pyocd pack install stm32g431rbtx stm32h753zitx
 ```
 
@@ -127,13 +128,27 @@ finch/
 └── finch-firmware/
 ```
 
-#### 5. Setup West Workspace
+#### 5. Set West Environmental Variables
 
 ```sh
-$env:FINCH_FIRMWARE_ROOT = (Get-Location).Path
-pip install west
 cd finch-firmware
+$env:FINCH_FIRMWARE_ROOT = (Get-Location).Path
 
+cd ../zephyr
+$env:ZEPHYR_BASE = (Get-Location).Path
+
+cd ../zephyr-sdk
+$env:ZEPHYR_SDK_INSTALL_DIR = (Get-Location).Path
+
+$env:ZEPHYR_TOOLCHAIN_VARIANT = "zephyr"
+```
+
+#### 6. Setup West Workspace
+```sh
+cd ../finch-firmware
+```
+```sh
+pip install west
 west init --local --mf west.yml
 west update
 west zephyr-export
@@ -141,9 +156,101 @@ west packages pip --install
 west sdk install --install-dir "$(Split-Path $env:FINCH_FIRMWARE_ROOT -Parent)\zephyr-sdk" --toolchains arm-zephyr-eabi
 ```
 
-#### 6. Install `pyocd` (for flashing onto the dev boards)
+#### 7. Setup `ninja`
+```sh
+pip install ninja
+```
+
+#### 8. Install `pyocd` (for flashing onto the dev boards)
 
 ```sh
 pip install pyocd
+pyocd pack update
+pyocd pack install stm32g431rbtx stm32h753zitx
+```
+
+
+## Manual Setup (macOS)
+
+This guide is for **macOS**.
+
+#### 1. Make an Empty Directory
+
+Open the terminal. Then, `cd` to a folder you desire, and:
+
+```sh
+mkdir finch
+cd finch
+```
+
+#### 2. Clone the finch-firmware Respository:
+
+```sh
+git clone https://github.com/utat-ss/finch-firmware.git
+```
+
+#### 3. Setup Python venv:
+
+```sh
+python -m venv .venv
+source .venv/bin/activate
+```
+
+#### 4. Download Zephyr SDK
+
+Download [Zephyr SDK](https://github.com/zephyrproject-rtos/sdk-ng/releases/tag/v0.17.4). In particular, download the Minimal SDK Bundle for macOS, unzip it and put it in the `finch` directory. Name the folder `zephyr-sdk`.
+
+Then, download the `arm-zephyr-eabi` toolchain for macOS. Unzip it and place its contents within the `zephyr-sdk`folder. The resulting folder structure should look like this:
+
+```
+finch/
+├── zephyr-sdk/
+│   ├── arm-zephyr-eabi/
+│   ├── cmake/
+│   ├── sdk_toolchains
+│   ├── sdk_version
+│   ├── setup.sh
+│   └── zephyr-sdk-0.17.4/
+└── finch-firmware/
+```
+
+#### 5. Set West Environmental Variables
+
+```sh
+cd finch-firmware
+export FINCH_FIRMWARE_ROOT="$(pwd)"
+
+cd ../zephyr
+export ZEPHYR_BASE="$(pwd)"
+
+cd ../zephyr-sdk
+export ZEPHYR_SDK_INSTALL_DIR="$(pwd)"
+
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+```
+
+#### 6. Setup West Workspace
+```sh
+cd ../finch-firmware
+```
+```sh
+pip install west
+west init --local --mf west.yml
+west update
+west zephyr-export
+west packages pip --install
+west sdk install --install-dir "$(dirname "$FINCH_FIRMWARE_ROOT")/zephyr-sdk" --toolchains arm-zephyr-eabi
+```
+
+#### 7. Setup `ninja`
+```sh
+pip install ninja
+```
+
+#### 8. Install `pyocd` (for flashing onto the dev boards)
+
+```sh
+pip install pyocd
+pyocd pack update
 pyocd pack install stm32g431rbtx stm32h753zitx
 ```
