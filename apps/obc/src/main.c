@@ -13,12 +13,12 @@
 #include <finch/obc_littlefs/lfs_callbacks.h>
 
 #include <zephyr/logging/log.h>
-#include <zephyr/types.h>
-#include <zephyr/sys/util.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
+
+#include "adcs_service.h"
 
 LOG_MODULE_REGISTER(obc);
 
@@ -54,6 +54,9 @@ struct lfs_flash_context flash_context;
 
 int main(void)
 {
+	int csp_rc;
+	adcs_rc_t adcs_rc;
+
 	LOG_INF("Board Started");
 
 	/*
@@ -116,29 +119,29 @@ int main(void)
 		return 0;
 	}
 
-	int rc;
-	adcs_rc_t adcs_rc;
-
-	rc = finch_csp_init();
-	if (rc < 0) {
-		LOG_ERR("Failed to initialize FINCH CSP (%d)", rc);
-		return rc;
-	}
-
 	adcs_rc = adcs_init();
 	if (adcs_rc != ADCS_RC_OK) {
 		LOG_ERR("Failed to initialize ADCS (%d)", adcs_rc);
 		return adcs_rc;
 	}
 
-	/* Verify ADCS ID. */
+	LOG_INF("ADCS READY");
 
-	uint8_t adcs_id[ADCS_ID_SIZE];
-	adcs_rc = adcs_get_id(adcs_id, ADCS_ID_SIZE);
+	csp_rc = finch_csp_init();
+	if (csp_rc != 0) {
+		LOG_ERR("Failed to initialize CSP (%d)", csp_rc);
+		return csp_rc;
+	}
 
-	LOG_INF("ADCS ID: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
-			adcs_id[0], adcs_id[1], adcs_id[2], adcs_id[3], adcs_id[4], adcs_id[5],
-			adcs_id[6], adcs_id[7], adcs_id[8], adcs_id[9], adcs_id[10], adcs_id[11]);
+	LOG_INF("CSP READY");
+
+	csp_rc = adcs_service_init();
+	if (csp_rc != 0) {
+		LOG_ERR("Failed to initialize CSP ADCS service (%d)", csp_rc);
+		return csp_rc;
+	}
+
+	LOG_INF("ADCS CSP SERVICE READY");
 
 	while (1) {
 
