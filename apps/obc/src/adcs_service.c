@@ -31,8 +31,7 @@ struct adcs_request {
 
 static void adcs_service_handler(csp_conn_t *conn)
 {
-	LOG_INF("Received ADCS command");
-	struct adcs_request adcs_req;
+	uint8_t cmd;
 	adcs_rc_t adcs_rc;
 
 	/* For now, we assume a single packet for each command. */
@@ -42,10 +41,10 @@ static void adcs_service_handler(csp_conn_t *conn)
 		csp_close(conn);
 		return;
 	}
-	memcpy(&adcs_req, req->data, sizeof(struct adcs_request));
+	cmd = req->data[0];
 	csp_buffer_free(req);
 
-	LOG_INF("ADCS CMD: [0x%X]", adcs_req.cmd);
+	LOG_INF("ADCS CMD: [0x%X]", cmd);
 
 	csp_packet_t *resp = csp_buffer_get(0);
 	if (resp == NULL) {
@@ -54,7 +53,7 @@ static void adcs_service_handler(csp_conn_t *conn)
 		return;
 	}
 
-	switch (adcs_req.cmd) {
+	switch (cmd) {
 	case ADCS_CMD_GET_ID:
 		adcs_rc = adcs_get_id(resp->data, ADCS_ID_SIZE);
 		if (adcs_rc == ADCS_RC_ERR) {
@@ -65,7 +64,7 @@ static void adcs_service_handler(csp_conn_t *conn)
 		resp->length = ADCS_ID_SIZE;
 		break;
 	default:
-		LOG_WRN("Unknown ADCS command [0x%X]", adcs_req.cmd);
+		LOG_WRN("Unknown ADCS command [0x%X]", cmd);
 		csp_buffer_free(resp);
 		goto out;
 	}
