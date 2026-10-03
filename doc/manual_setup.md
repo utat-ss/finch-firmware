@@ -124,7 +124,6 @@ finch/
 │   ├── sdk_toolchains
 │   ├── sdk_version
 │   ├── setup.sh
-│   └── zephyr-sdk-0.17.4/
 └── finch-firmware/
 ```
 
@@ -210,7 +209,6 @@ finch/
 │   ├── sdk_toolchains
 │   ├── sdk_version
 │   ├── setup.sh
-│   └── zephyr-sdk-0.17.4/
 └── finch-firmware/
 ```
 
