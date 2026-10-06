@@ -9,6 +9,8 @@
 
 import argparse
 import asyncio
+import enum
+import struct
 
 import can
 import csp_py
@@ -17,7 +19,23 @@ from csp_py.interfaces.can import CspCanInterface
 OBC_ADDR = 1
 OWN_ADDR = 3
 ADCS_CMD_PORT = 10
-ADCS_CMD_GET_ID = 0x1
+
+# The ADCS definitions below mirror apps/obc/src/adcs_service.h and must be kept in sync with it.
+ADCS_ID_SIZE = 12
+
+
+class AdcsServiceCmdType(enum.IntEnum):
+    GET_ID = 0x01
+
+
+class AdcsServiceStatus(enum.IntEnum):
+    OK = 0x00
+    ERR_UNKNOWN_CMD = 0x01
+    ERR_ADCS = 0x02
+
+
+ADCS_SERVICE_CMD = struct.Struct("<B")  # type
+ADCS_SERVICE_RES = struct.Struct(f"<BB{ADCS_ID_SIZE}s")  # status, cmd_type, data
 
 # Important: The CRC32 send flag is needed becuause of an issue in libcsp where the check for CRC is hard coded in csp_bind_callback (See https://github.com/libcsp/libcsp/issues/972)
 # The issue should be resolved in a few days so the CRC flag should be removed when that happens.
@@ -43,9 +61,20 @@ async def cmd_ping(node: csp_py.CspNode):
 async def cmd_adcs_get_id(node: csp_py.CspNode):
     print(f"Requesting ADCS ID from node {OBC_ADDR}...")
     sock = await node.connect(dst=OBC_ADDR, port=ADCS_CMD_PORT, send_flags=SEND_FLAGS)
-    await sock.send(data=bytearray([ADCS_CMD_GET_ID]))
+    await sock.send(data=bytearray(ADCS_SERVICE_CMD.pack(AdcsServiceCmdType.GET_ID)))
     response = await sock.recv()
-    print(f"Reply from node {OBC_ADDR}: bytes={len(response.data)} id={response.data.hex(' ')}")
+    if len(response.data) != ADCS_SERVICE_RES.size:
+        print(f"Reply from node {OBC_ADDR}: unexpected size {len(response.data)} (expected {ADCS_SERVICE_RES.size})")
+        return
+    status, cmd_type, data = ADCS_SERVICE_RES.unpack(bytes(response.data))
+    if status != AdcsServiceStatus.OK:
+        try:
+            status_name = AdcsServiceStatus(status).name
+        except ValueError:
+            status_name = "UNKNOWN"
+        print(f"Reply from node {OBC_ADDR}: error status=0x{status:02x} ({status_name})")
+        return
+    print(f"Reply from node {OBC_ADDR}: cmd=0x{cmd_type:02x} id={data.hex(' ')}")
 
 
 COMMANDS = [
