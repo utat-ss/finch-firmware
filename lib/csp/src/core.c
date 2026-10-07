@@ -99,8 +99,6 @@ int finch_csp_init(void)
 
 	csp_init();
 
-	csp_if_lo.addr = CONFIG_FINCH_CSP_NODE_ADDRESS;
-
 #ifdef CONFIG_FINCH_CSP_CAN
 	ret = csp_can_open_and_add_interface(can, "CAN", CONFIG_FINCH_CSP_NODE_ADDRESS,
 					     can_bitrate, 0, 0, &can_if);
