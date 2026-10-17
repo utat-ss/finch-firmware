@@ -75,6 +75,8 @@ static void *obc_littlefs_setup(void)
     if (err) {
         // If mount fails, format filesystem and retry mount
         err = lfs_format(&lfs, &cfg);
+        zassert_equal(err, 0, "Failed to format the filesystem");
+
         err = lfs_mount(&lfs, &cfg);
         zassert_equal(err, 0, "Failed to mount filesystem after formatting");
     }
