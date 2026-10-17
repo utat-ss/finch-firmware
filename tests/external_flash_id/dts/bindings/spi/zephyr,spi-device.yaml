@@ -1,0 +1,6 @@
+# Copyright (c) 2026 The FINCH CubeSat Project Flight Software Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+description: Driverless SPI device for the external flash identification test
+compatible: "zephyr,spi-device"
+include: spi-device.yaml

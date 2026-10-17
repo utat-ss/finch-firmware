@@ -1,0 +1,10 @@
+tests:
+  external_flash_id.basic:
+    harness: ztest
+    integration_platforms:
+      - nucleo_h743zi
+    platform_allow:
+      - nucleo_h743zi
+    tags:
+      - external_flash
+      - hardware
