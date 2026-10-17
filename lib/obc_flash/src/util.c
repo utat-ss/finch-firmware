@@ -239,6 +239,7 @@ int obc_print_id(const struct device *spi, const struct device *gpio, int cs_pin
 	return 0;
 }
 
+// cppcheck-suppress unusedFunction
 int obc_reset_state(const struct device *spi, const struct device *gpio, int cs_pin)
 {
     uint8_t reset_en = FLASH_CMD_RESET_EN;
@@ -259,6 +260,7 @@ int obc_reset_state(const struct device *spi, const struct device *gpio, int cs_
     return flash_wait_ready(spi, gpio, cs_pin);
 }
 
+// cppcheck-suppress unusedFunction
 int obc_erase_all_mem(const struct device *spi, const struct device *gpio, int cs_pin)
 {
     uint8_t wren = FLASH_CMD_WRENB;
