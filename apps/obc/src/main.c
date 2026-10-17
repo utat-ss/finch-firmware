@@ -66,8 +66,18 @@ int main(void)
     const struct device *spi = DEVICE_DT_GET(SPI_NODE);
     const struct device *gpio = DEVICE_DT_GET(CS_GPIO_NODE);
     int ret = gpio_pin_configure(gpio, CS_PIN, GPIO_OUTPUT_HIGH);
+	if (ret != 0) {
+		LOG_ERR("Failed to configure GPIO pin");
+		return ret;
+	}
+
     // unlock flash memory to allow write/erase operations
     ret = obc_flash_global_unlock(spi, gpio, CS_PIN);
+	if (ret != 0) {
+		LOG_ERR("Failed to unlock flash memory");
+		return ret;
+	}
+
     // configure flash context for littlefs
     flash_context.spi = spi;
     flash_context.gpio = gpio;
@@ -78,6 +88,11 @@ int main(void)
     if (fs_err) {
         LOG_INF("Failed to mount filesystem, formatting and retrying...");
         fs_err = lfs_format(&lfs, &cfg);
+		if (fs_err) {
+			LOG_ERR("Failed to format filesystem");
+            return fs_err;
+		}
+
         // retry mounting after formatting
         fs_err = lfs_mount(&lfs, &cfg);
         if (fs_err) {
@@ -106,14 +121,14 @@ int main(void)
 
 	if (wdt_channel_id < 0) {
 		LOG_ERR("Internal watchdog install error");
-		return 0;
+		return wdt_channel_id;
 	}
 
-	int err = wdt_setup(wdt, CONFIG_WDT_OPT);
+	int wdt_err = wdt_setup(wdt, CONFIG_WDT_OPT);
 
-	if (err < 0) {
+	if (wdt_err < 0) {
 		LOG_ERR("Internal watchdog setup error");
-		return 0;
+		return wdt_err;
 	}
 
 	int rc;
@@ -146,9 +161,9 @@ int main(void)
 		 *	Main loop runs here. If it hangs, feeding will not run
 		 */
 
-		int ret = wdt_feed(wdt, wdt_channel_id);
+		int wdt_ret = wdt_feed(wdt, wdt_channel_id);
 
-		if (ret < 0) {
+		if (wdt_ret < 0) {
 			LOG_ERR("Failed to feed the watchdog");
 			return 0;
 		}
