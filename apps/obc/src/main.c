@@ -18,7 +18,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
-#include "adcs_service.h"
+#include <finch/adcs_service/adcs_service.h>
 
 LOG_MODULE_REGISTER(obc);
 

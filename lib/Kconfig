@@ -4,6 +4,7 @@
 menu "FINCH CubeSat Flight Software Libraries"
 
 rsource "adcs/Kconfig"
+rsource "adcs_service/Kconfig"
 rsource "ccsds123b/Kconfig"
 rsource "csp/Kconfig"
 rsource "obc_flash/Kconfig"
