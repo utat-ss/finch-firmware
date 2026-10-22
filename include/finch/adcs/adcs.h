@@ -25,6 +25,29 @@ typedef enum {
 	ADCS_RC_ERR,
 } adcs_rc_t;
 
+
+typedef struct {
+	bool herr;
+	bool serr;
+	bool wdt;
+	bool uv;
+	bool oc;
+	bool ot; 
+	uint8_t gnss;
+	bool tle;
+	bool des;
+	bool sun;
+	bool tgl;
+	bool tumb;
+	bool ame;
+	// uint8_t cussv; // Think this is one of the custom ones that we don't need?
+	uint8_t mode;
+
+} adcs_stat_t;
+
+adcs_rc_t adcs_get_stat(adcs_stat_t *status);
+
+
 /**
  * @brief Initialize and enable the ADCS UART callback
  *

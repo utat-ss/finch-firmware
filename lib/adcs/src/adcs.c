@@ -129,3 +129,79 @@ adcs_rc_t adcs_get_id(uint8_t *id, uint8_t id_size)
 
 	return ADCS_RC_OK;
 }
+
+adcs_rc_t adcs_get_stat(adcs_stat_t *status) {
+
+	__ASSERT(status, "Status struct cannot be NULL");
+
+	/* Reset RX semaphore and count state */
+	k_sem_reset(&adcs_rx_sem);
+	adcs_rx_len = 0U;
+	adcs_rx_expected = 4U + 4U + 1U; /* stat reg is of type uint8[4] */
+
+	uint8_t adcs_stat_cmd[] = {0xc9, 0x80, 0x01, 0x00, 0xB6}; /*Header, id, size, err, checksum for MTSR command packet by ADCS manual format*/
+
+	/*Sending command*/
+	for (size_t i = 0; i < sizeof(adcs_stat_cmd); ++i) {
+		uart_poll_out(adcs_uart, adcs_stat_cmd[i]);
+
+	}
+
+	/*Waiting for ADCS response*/
+	if (k_sem_take(&adcs_rx_sem, K_MSEC(1000)) != 0) {
+		LOG_ERR("ADCS status register response timeout");
+		return ADCS_RC_ERR;
+	}
+
+	if (adcs_rx_len < adcs_rx_expected) {
+		LOG_ERR("ADCS status response too short (%u bytes)", adcs_rx_len);
+		return ADCS_RC_ERR;
+	}
+
+
+	/*Check command echo for adcs_stat_cmd*/
+	uint8_t adcs_rx_i = 0;
+	for (; adcs_rx_i < 4; adcs_rx_i ++) {
+		if (adcs_rx_buf[adcs_rx_i] != adcs_stat_cmd[adcs_rx_i]) {
+			return ADCS_RC_ERR;
+		}
+
+	}
+
+	/*Parse stat payload into adcs_stat_t*/
+	uint8_t b0 = adcs_rx_buf[4]; /*blank to mode*/
+	uint8_t b1 = adcs_rx_buf[5]; /*	cussv to tle*/
+	/*uint8_t b2 = adcs_rx_buf[6] no important bits in this byte*/
+	uint8_t b3 = adcs_rx_buf[7]; /*GNSS to HERR*/
+
+	/*=======Load into status=======*/
+
+	status->mode = (b0 >> 5) & 0x7; /*Bits 7 to 0*/
+
+	/*bits 15 to 8*/
+	status->tle = (b1 >> 7) & 0x1;
+	status->des = (b1 >> 6) & 0x1;
+	status->sun = (b1 >> 5) & 0x1;
+	status->tgl = (b1 >> 4) & 0x1;
+	status->tumb = (b1 >> 3) & 0x1;
+	status->ame = (b1 >> 2) & 0x1;
+
+
+	/*bits 31 to 24*/
+	status->herr = (b3 >> 7) & 0x1;
+	status->serr = (b3 >> 6) & 0x1;
+	status->wdt = (b3 >> 5) & 0x1;
+	status->uv = (b3 >> 4) & 0x1;
+	status->oc = (b3 >> 3) & 0x1;
+	status->ot = (b3 >> 2) & 0x1;
+	status->gnss = b3 & 0x3; 
+
+	/* Verify checksum. */
+	if (!adcs_verify_checksum(adcs_rx_buf, adcs_rx_len)) {
+		LOG_ERR("ADCS Checksum error");
+		return ADCS_RC_ERR;
+	}
+
+	return ADCS_RC_OK;
+	
+}
