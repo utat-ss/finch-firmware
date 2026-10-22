@@ -1,0 +1,4 @@
+tests:
+  adcs_service.basic:
+    platform_allow:
+      - obc
