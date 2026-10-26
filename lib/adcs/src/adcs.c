@@ -10,7 +10,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/kernel.h>
 
-uint8_t const ADCS_ID_SIZE = 12;
 static uint8_t const adcs_id_expected[] = {0x54, 0x41, 0x44, 0x31, 0x30, 0x32,
 					   0x30, 0x35, 0x33, 0x44, 0x00, 0x00};
 

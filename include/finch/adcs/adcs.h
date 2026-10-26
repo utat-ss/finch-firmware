@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-extern uint8_t const ADCS_ID_SIZE;
+enum { ADCS_ID_SIZE = 12 };
 
 typedef enum {
 	ADCS_RC_OK,
