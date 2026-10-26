@@ -1,0 +1,9 @@
+# Copyright (c) 2026 The FINCH CubeSat Project Flight Software Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config FINCH_ADCS_SERVICE
+	bool "FINCH ADCS CSP service"
+	depends on FINCH_ADCS && FINCH_CSP
+	help
+	  CSP service that forwards ADCS commands received
+	  over CSP to the ADCS library.
