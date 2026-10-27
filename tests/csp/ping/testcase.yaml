@@ -1,0 +1,4 @@
+tests:
+  csp.ping:
+    platform_allow:
+      - obc
