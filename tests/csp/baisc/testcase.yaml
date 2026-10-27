@@ -1,4 +1,5 @@
 tests:
-  csp.ping:
+  csp.basic:
     platform_allow:
       - obc
+      - pay
