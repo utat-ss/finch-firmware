@@ -11,11 +11,11 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-LOG_MODULE_REGISTER(bench);
+LOG_MODULE_REGISTER(csp_test);
 
-ZTEST_SUITE(csp_ping, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(csp_tests, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(csp_ping, test_ping_reply)
+ZTEST(csp_tests, test_ping_reply)
 {
 	int csp_rc;
 
