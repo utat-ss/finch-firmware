@@ -1,0 +1,4 @@
+tests:
+  adcs.integration:
+    tags: subsystem-integration-tests
+    platform_allow: obc

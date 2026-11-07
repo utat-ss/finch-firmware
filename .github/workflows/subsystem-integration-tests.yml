@@ -1,0 +1,66 @@
+name: Subsystem Integration Tests
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 5 * * *'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  subsystem-integration-tests:
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Zephyr Environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install west
+          pyocd pack install stm32g431rbtx
+          rm -rf ../.west
+          west init -l .
+          west update
+          west zephyr-export
+          west packages pip --install
+
+      - name: Release serial devices
+        run: |
+          for dev in /dev/ttyACM0 /dev/ttyACM1; do
+            sudo fuser -k "$dev" || true
+            sudo chmod 666 "$dev" || true
+          done
+
+      - name: Give STLINK permissions
+        run: scripts/ci/give_stlink_permissions.sh
+
+      - name: Run subsystem integration tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source ~/.venv/bin/activate
+          west twister                          \
+            -T tests                            \
+            -v                                  \
+            --tag subsystem-integration-tests   \
+            --device-testing                    \
+            --hardware-map ~/hardware_map.yaml
+
+      - name: Clean environment
+        run: rm -rf twister-out*
