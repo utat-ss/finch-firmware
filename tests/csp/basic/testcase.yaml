@@ -1,0 +1,5 @@
+tests:
+  csp.basic:
+    platform_allow:
+      - obc
+      - pay
