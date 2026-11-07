@@ -13,19 +13,20 @@
 
 LOG_MODULE_REGISTER(csp_test);
 
-ZTEST_SUITE(csp_tests, NULL, NULL, NULL, NULL, NULL);
+static void *adcs_service_setup(void)
+{
+	int ret;
+
+	ret = finch_csp_init();
+	zassert_equal(ret, 0, "Unable to set up Finch CSP");
+
+	return NULL;
+}
+
+ZTEST_SUITE(csp_tests, NULL, adcs_service_setup, NULL, NULL, NULL);
 
 ZTEST(csp_tests, test_ping_reply)
 {
-	int csp_rc;
-
-    csp_rc = finch_csp_init();
-
-    zassert_equal(csp_rc, 0);
-
-    LOG_INF("CSP Initialized.");
-
     int res = csp_ping(0, 1000, 100, CSP_O_CRC32);
-
     zassert_false(res == -1);
 }
